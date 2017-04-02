@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!--加载redis配置文件-->
+    <context:property-placeholder order="6" ignore-unresolvable="true" location="classpath:redis.properties"/>
+
+    <!-- Jedis线程 -->
+    <bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">
+        <property name="maxIdle" value="${redis.maxIdle}" />
+        <property name="minIdle" value="${redis.minIdle}" />
+        <property name="maxTotal" value="${redis.maxTotal}" />
+        <property name="maxWaitMillis" value="${redis.maxWait}"/>
+        <property name="testOnReturn" value="${redis.testOnReturn}"/>
+        <property name="testOnBorrow" value="${redis.testOnBorrow}" />
+        <property name="testWhileIdle" value="${redis.testWhileIdle}"/>
+        <property name="numTestsPerEvictionRun" value="${redis.numTestsPerEvictionRun}"/>
+    </bean>
+
+    <bean id="jedisShardInfo6379" class="redis.clients.jedis.JedisShardInfo">
+        <constructor-arg index="0" value="${redis.host}" />
+        <constructor-arg index="1" value="6379" type="int" />
+        <property name="password" value="${redis.password}"/>
+        <property name="connectionTimeout" value="${redis.timeout}"/>
+    </bean>
+
+    <bean id="jedisShardInfo6479" class="redis.clients.jedis.JedisShardInfo">
+        <constructor-arg index="0" value="${redis.host}" />
+        <constructor-arg index="1" value="6479" type="int" />
+        <property name="password" value="${redis.password}"/>
+    </bean>
+
+    <!--配置自定义的redis链接，可以分为主、从-->
+    <bean id="redisDataSource" class="com.sanweibook.jhook.redis.factory.RedisDataSourceFactory" destroy-method="destroy">
+        <property name="dbIndex" value="${redis.database}"/>
+        <property name="poolConfig" ref="jedisPoolConfig"/>
+        <property name="shardInfo" ref="jedisShardInfo6379"/>
+    </bean>
+
+    <bean id="redisClientTemplate" class="com.sanweibook.jhook.redis.core.RedisClientTemplate">
+        <constructor-arg ref="redisDataSource"/>
+        <property name="expiration" value="${redis.expiration}"/>
+    </bean>
+
+    <!-- Redis连接 -->
+    <bean id="jedisConnectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
+        <property name="shardInfo" ref="jedisShardInfo6379"/>
+        <property name="database" value="1"/>
+        <property name="poolConfig" ref="jedisPoolConfig"/>
+        <property name="usePool" value="true"/>
+    </bean>
+
+    <!-- 缓存序列化方式 -->
+    <bean id="keySerializer" class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+    <bean id="valueSerializer" class="org.springframework.data.redis.serializer.JdkSerializationRedisSerializer"/>
+
+    <!-- 缓存 -->
+    <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
+        <property name="connectionFactory" ref="jedisConnectionFactory" />
+        <property name="defaultSerializer" ref="keySerializer"/>
+        <property name="keySerializer" ref="keySerializer" />
+        <property name="valueSerializer" ref="valueSerializer" />
+        <property name="hashKeySerializer" ref="keySerializer" />
+        <property name="hashValueSerializer" ref="valueSerializer" />
+    </bean>
+
+    <bean id="redisCacheManager" class="org.springframework.data.redis.cache.RedisCacheManager">
+        <constructor-arg index="0" ref="redisTemplate" />
+        <property name="defaultExpiration" value="${redis.expiration}" />
+        <!--<property name="expires">
+            <map>
+                <entry key="22" value="3000"></entry>
+            </map>
+        </property>-->
+    </bean>
+
+</beans>

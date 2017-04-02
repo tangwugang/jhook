@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sanweibook.jhook.dal.dao.sys.SysUserDao">
+
+    <sql id="sysUserColumns">
+        <trim suffixOverrides=",">
+            id as id,
+            user_name as userName,
+            password as password,
+            is_deleted as isDeleted,
+            creator as creator,
+            modifier as modifier,
+            gmt_create as gmtCreate,
+            gmt_modified as gmtModified,
+        </trim>
+    </sql>
+
+    <sql id="sysUserInsert">
+        <trim suffixOverrides=",">
+            id,
+            user_name,
+            password,
+            is_deleted,
+            creator,
+            modifier,
+            gmt_create,
+            gmt_modified,
+        </trim>
+    </sql>
+
+    <sql id="sysUserUpdate">
+        <set>
+            <trim prefixOverrides=",">
+
+                <if test="userName != null">user_name = #{userName},</if>
+                <if test="password != null">password = #{password},</if>
+                <if test="isDeleted != null">is_deleted = #{isDeleted},</if>
+                <if test="modifier != null">modifier = #{modifier},</if>
+                <if test="gmtModified != null">gmt_modified = #{gmtModified},</if>
+            </trim>
+        </set>
+    </sql>
+
+    <sql id="sysUserWhere">
+        <trim prefix="WHERE" prefixOverrides="AND | OR">
+            <if test="id != null">
+                AND id = #{id}
+            </if>
+            <if test="userName != null">
+                AND user_name = #{userName}
+            </if>
+            <if test="password != null">
+                AND password = #{password}
+            </if>
+            <if test="isDeleted != null">
+                AND is_deleted = #{isDeleted}
+            </if>
+            <if test="creator != null">
+                AND creator = #{creator}
+            </if>
+            <if test="modifier != null">
+                AND modifier = #{modifier}
+            </if>
+            <if test="gmtCreate != null">
+                AND gmt_create = #{gmtCreate}
+            </if>
+            <if test="gmtModified != null">
+                AND gmt_modified = #{gmtModified}
+            </if>
+        </trim>
+    </sql>
+
+    <update id="delete">
+        UPDATE sys_user
+        SET is_deleted = 1
+        <include refid="sysUserWhere"/>
+    </update>
+
+    <update id="deleteById">
+        UPDATE sys_user
+        SET is_deleted = 1
+        WHERE 1=1
+        AND id = #{id}
+    </update>
+
+    <update id="deleteByIds">
+        UPDATE sys_user
+        SET is_deleted = 1
+        WHERE 1=1
+        AND id IN
+        <foreach collection="list" open="(" close=")" item="item" index="index" separator=",">
+            #{item}
+        </foreach>
+    </update>
+
+    <select id="get" resultType="SysUser">
+        SELECT
+        <include refid="sysUserColumns"/>
+        FROM sys_user
+        <include refid="sysUserWhere"/>
+    </select>
+
+    <select id="getById" resultType="SysUser" parameterType="Long">
+        SELECT
+        <include refid="sysUserColumns"/>
+        FROM sys_user
+        WHERE is_deleted = 0
+        AND id = #{id}
+    </select>
+
+    <select id="queryCount" resultType="Integer" parameterType="SysUser">
+        SELECT COUNT(id)
+        FROM sys_user
+        <include refid="sysUserWhere"/>
+    </select>
+
+    <select id="queryAll" resultType="SysUser">
+        SELECT
+        <include refid="sysUserColumns"/>
+        FROM sys_user
+        <include refid="sysUserWhere"/>
+    </select>
+
+    <select id="queryByIds" resultType="SysUser">
+        SELECT
+        <include refid="sysUserColumns"/>
+        FROM sys_user
+        WHERE 1=1
+        AND id IN
+        <foreach collection="list" open="(" close=")" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="queryByPage" resultType="SysUser">
+        SELECT
+        <include refid="sysUserColumns"/>
+        FROM sys_user
+        <include refid="sysUserWhere"/>
+        <if test="page.orders != null &amp;&amp; page.orders.size > 0">
+            ORDER BY
+            <foreach collection="page.orders" index="index" item="item" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        LIMIT ${page.offSet},${page.limit}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO sys_user
+        (
+        <include refid="sysUserInsert"/>
+        )
+        VALUES
+        (
+        <trim suffixOverrides=",">
+            #{id},
+            #{userName},
+            #{password},
+            #{isDeleted},
+            #{creator},
+            #{modifier},
+            #{gmtCreate},
+            #{gmtModified},
+        </trim>
+        )
+    </insert>
+
+    <insert id="batchInsert">
+        INSERT INTO sys_user
+        (
+        <include refid="sysUserInsert"/>
+        )
+        VALUES
+        <foreach collection="list" index="index" item="item" separator=",">
+            (
+            <trim suffixOverrides=",">
+                #{item.id},
+                #{item.userName},
+                #{item.password},
+                #{item.isDeleted},
+                #{item.creator},
+                #{item.modifier},
+                #{item.gmtCreate},
+                #{item.gmtModified},
+            </trim>
+            )
+        </foreach>
+    </insert>
+
+    <update id="update">
+        UPDATE sys_user
+        <include refid="sysUserUpdate"/>
+        WHERE 1=1
+        AND id = #{id}
+    </update>
+</mapper>
